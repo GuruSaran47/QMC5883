@@ -1,5 +1,5 @@
 #include <Wire.h>
-#include "qmc_5883l_i2c.h"
+#include "qmc_5883l.h"
 
 #define Clock_400KHz 400000
 
@@ -10,9 +10,7 @@
 static uint8 gsu8_qmc_settings;
 static uint8 gsu8_control2_settings;
 
-static uint16 gsu16_xAxis;
-static uint16 gsu16_yAxis;
-static uint16 gsu16_zAxis;
+static t_Axis_Data axis_values;
 
 static sint16 gss16_Temperature;
 
@@ -75,41 +73,51 @@ void set_control_reg2(uint8 set_reset, uint8 set_rol_pointer, uint8 set_int){
   Wire.write(gsu8_control2_settings);
   Wire.endTransmission();
 }
-void debug_status(void){
+/*
+*   Func: uint8 debug_status(void)
+*   This function returns the status register value
+*/
+
+uint8 debug_status(void){
   Wire.beginTransmission(QMC_5883L_ADDR);
   Wire.write(QMC_STATUS);
   Wire.endTransmission();
   delay(10);
 
-  static uint8 qmc_status;
+  uint8 qmc_status = 0u;
   Wire.requestFrom(QMC_5883L_ADDR,ONE_BYTE);
   qmc_status= Wire.read();
   Serial.print("Status: ");
   Serial.println(qmc_status);
-
+  return qmc_status;
 }
 /*
-*   Func: read_Xaxis(void)
+*   Func: voidread_Xaxis(void)
 *   Description: used for reading the values measured on X axis
 */
-uint16 read_Allaxis(void){
-  Wire.beginTransmission(QMC_5883L_ADDR);
-  Wire.write(QMC_X_LSB);
-  Wire.endTransmission();
-  delay(10);
+void read_Allaxis(void){
+  uint8 sensor_status = debug_status();
+  if((sensor_status & STATUS_DRDY) == STATUS_DRDY){
+    Wire.beginTransmission(QMC_5883L_ADDR);
+    Wire.write(QMC_X_LSB);
+    Wire.endTransmission();
+    delay(10);
 
-  Wire.requestFrom(QMC_5883L_ADDR,SIX_BYTES);
-  uint8 x_lsb = Wire.read();
-  uint8 x_msb = Wire.read();
-  uint8 y_lsb = Wire.read();
-  uint8 y_msb = Wire.read();
-  uint8 z_lsb = Wire.read();
-  uint8 z_msb = Wire.read();
+    Wire.requestFrom(QMC_5883L_ADDR,SIX_BYTES);
+    uint8 x_lsb = Wire.read();
+    uint8 x_msb = Wire.read();
+    uint8 y_lsb = Wire.read();
+    uint8 y_msb = Wire.read();
+    uint8 z_lsb = Wire.read();
+    uint8 z_msb = Wire.read();
 
-  gsu16_xAxis = (x_msb<<8)|x_lsb;
-  gsu16_yAxis = (y_msb<<8)|y_lsb;
-  gsu16_zAxis = (z_msb<<8)|z_lsb;
-  
+    axis_values.xAxis = (x_msb<<8)|x_lsb;
+    axis_values.yAxis = (y_msb<<8)|y_lsb;
+    axis_values.zAxis = (z_msb<<8)|z_lsb;
+  }
+  else{
+    Serial.println("Check the sensor settings : Refer to qmc_5883l_init() settings");
+  }
 }
 void setup() {
   // put your setup code here, to run once:
@@ -122,5 +130,4 @@ void setup() {
 
 void loop() {
   read_Allaxis();
-  // read_Xaxis();
 }
