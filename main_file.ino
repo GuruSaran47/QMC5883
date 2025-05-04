@@ -45,9 +45,10 @@ void debug_settings(void){
   delay(10);
   Wire.requestFrom(QMC_5883L_ADDR,ONE_BYTE);
   msu8_qmc_setting = ((Wire.read())); 
+#ifdef DEBUG
   Serial.print("CONTROL A: ");
   Serial.println(msu8_qmc_setting);
-
+#endif
   Wire.beginTransmission(QMC_5883L_ADDR);
   Wire.write(QMC_CONTROL_02);
   Wire.endTransmission();
@@ -55,8 +56,10 @@ void debug_settings(void){
 
   Wire.requestFrom(QMC_5883L_ADDR,ONE_BYTE);
   msu8_qmc_setting = ((Wire.read())); 
+#ifdef DEBUG
   Serial.print("CONTROL B: ");
   Serial.println(msu8_qmc_setting);  
+#endif
 }
 
 /*
@@ -87,8 +90,10 @@ uint8 debug_status(void){
   uint8 qmc_status = 0u;
   Wire.requestFrom(QMC_5883L_ADDR,ONE_BYTE);
   qmc_status= Wire.read();
+#ifdef DEBUG
   Serial.print("Status: ");
   Serial.println(qmc_status);
+#endif
   return qmc_status;
 }
 /*
@@ -103,22 +108,39 @@ void read_Allaxis(void){
     Wire.endTransmission();
     delay(10);
 
-    Wire.requestFrom(QMC_5883L_ADDR,SIX_BYTES);
+    Wire.requestFrom(QMC_5883L_ADDR,EIGHT_BYTES);
     uint8 x_lsb = Wire.read();
     uint8 x_msb = Wire.read();
     uint8 y_lsb = Wire.read();
     uint8 y_msb = Wire.read();
     uint8 z_lsb = Wire.read();
     uint8 z_msb = Wire.read();
+    sint8 t_lsb = Wire.read();
+    sint8 t_msb = Wire.read();
 
     axis_values.xAxis = (x_msb<<8)|x_lsb;
     axis_values.yAxis = (y_msb<<8)|y_lsb;
     axis_values.zAxis = (z_msb<<8)|z_lsb;
+    gss16_Temperature = (t_msb<<8)|t_lsb;
   }
   else{
     Serial.println("Check the sensor settings : Refer to qmc_5883l_init() settings");
   }
 }
+
+/* 
+* func :        void debug_values(void)
+* Description:  This function can be used to initialize ones 
+*/
+void debug_all(void){
+    Serial.print("Temperature: ");Serial.println(gss16_Temperature);
+    Serial.print("X: ");Serial.print(axis_values.xAxis);Serial.print(" Y: ");Serial.print(axis_values.yAxis);Serial.print(" Z: ");Serial.println(axis_values.zAxis);
+}
+
+/* 
+* func :        void setup(void)
+* Description:  This function can be used to initialize ones 
+*/
 void setup() {
   // put your setup code here, to run once:
   Wire.begin();
@@ -128,6 +150,11 @@ void setup() {
   Serial.begin(115200);
 }
 
+/* 
+* func :        void loop(void)
+* Description:  This function runs in loops the usual sense 
+*/
 void loop() {
+  debug_all();
   read_Allaxis();
 }
