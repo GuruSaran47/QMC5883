@@ -140,7 +140,7 @@ void read_Allaxis(void){
 * Description:  This function can be used to initialize ones 
 */
 void debug_all(void){
-    Serial.print("Temperature: ");Serial.println(gss16_Temperature);
+    // Serial.print("Temperature: ");Serial.println(gss16_Temperature);
     Serial.print("X: ");Serial.print(axis_values.xAxis);Serial.print(" Y: ");Serial.print(axis_values.yAxis);Serial.print(" Z: ");Serial.println(axis_values.zAxis);
 }
 /*---------------------------------------------------------------------------------
@@ -181,7 +181,7 @@ void setup() {
   Wire.begin();
   Wire.setClock(Clock_400KHz);
   /* Here we have kept everything at the basic settings, with good data rate but high sensitivity for compassing applications */
-  qmc_5883l_init(MODE_CONTINUOUS,ODR_100Hz,SCALE_8G,OSR_256);
+  qmc_5883l_init(MODE_CONTINUOUS,ODR_100Hz,SCALE_2G,OSR_512);
   Serial.begin(115200);
 }
 /*---------------------------------------------------------------------------------
@@ -189,6 +189,7 @@ void setup() {
 * Description:  This function runs in loops the usual sense 
 */
 void loop() {
+  debug_all();
   read_Allaxis();
   Serial.println(get_heading());
 }
